@@ -895,6 +895,7 @@ namespace olc
 		// Draws a decal rotated to specified angle, wit point of rotation offset
 		void DrawRotatedDecal(const olc::vf2d& pos, olc::Decal* decal, const float fAngle, const olc::vf2d& center = { 0.0f, 0.0f }, const olc::vf2d& scale = { 1.0f,1.0f }, const olc::Pixel& tint = olc::WHITE);
 		void DrawPartialRotatedDecal(const olc::vf2d& pos, olc::Decal* decal, const float fAngle, const olc::vf2d& center, const olc::vf2d& source_pos, const olc::vf2d& source_size, const olc::vf2d& scale = { 1.0f, 1.0f }, const olc::Pixel& tint = olc::WHITE);
+		void DrawPartialRotatedDecalEx(const olc::vf2d& pos, olc::Decal* decal, const float fAngle, const olc::vf2d& center, const olc::vf2d& source_pos, const olc::vf2d& source_size, const olc::vf2d& scale = { 1.0f, 1.0f }, const olc::Pixel* colors = nullptr);
 		// Draws a multiline string as a decal, with tiniting and scaling
 		void DrawStringDecal(const olc::vf2d& pos, const std::string& sText, const Pixel col = olc::WHITE, const olc::vf2d& scale = { 1.0f, 1.0f });
 		void DrawStringPropDecal(const olc::vf2d& pos, const std::string& sText, const Pixel col = olc::WHITE, const olc::vf2d& scale = { 1.0f, 1.0f });
@@ -2434,6 +2435,39 @@ namespace olc
 		vLayers[nTargetLayer].vecDecalInstance.push_back(di);
 	}
 
+	void PixelGameEngine::DrawPartialRotatedDecalEx(const olc::vf2d& pos, olc::Decal* decal, const float fAngle, const olc::vf2d& center, const olc::vf2d& source_pos, const olc::vf2d& source_size, const olc::vf2d& scale, const olc::Pixel* colors)
+	{
+		DecalInstance di;
+		di.decal = decal;
+		if (colors) {
+			di.tint[0] = colors[0];
+			di.tint[1] = colors[1];
+			di.tint[2] = colors[2];
+			di.tint[3] = colors[3];
+		}
+		else {
+			di.tint[0] = olc::WHITE;
+		}
+		di.pos[0] = (olc::vf2d(0.0f, 0.0f) - center) * scale;
+		di.pos[1] = (olc::vf2d(0.0f, source_size.y) - center) * scale;
+		di.pos[2] = (olc::vf2d(source_size.x, source_size.y) - center) * scale;
+		di.pos[3] = (olc::vf2d(source_size.x, 0.0f) - center) * scale;
+		float c = cos(fAngle), s = sin(fAngle);
+		for (int i = 0; i < 4; i++)
+		{
+			di.pos[i] = pos + olc::vf2d(di.pos[i].x * c - di.pos[i].y * s, di.pos[i].x * s + di.pos[i].y * c);
+			di.pos[i] = di.pos[i] * vInvScreenSize * 2.0f - olc::vf2d(1.0f, 1.0f);
+			di.pos[i].y *= -1.0f;
+		}
+
+		olc::vf2d uvtl = source_pos * decal->vUVScale;
+		olc::vf2d uvbr = uvtl + (source_size * decal->vUVScale);
+		di.uv[0] = { uvtl.x, uvtl.y }; di.uv[1] = { uvtl.x, uvbr.y };
+		di.uv[2] = { uvbr.x, uvbr.y }; di.uv[3] = { uvbr.x, uvtl.y };
+		di.mode = nDecalMode;
+		vLayers[nTargetLayer].vecDecalInstance.push_back(di);
+	}
+
 	void PixelGameEngine::DrawPartialWarpedDecal(olc::Decal* decal, const olc::vf2d* pos, const olc::vf2d& source_pos, const olc::vf2d& source_size, const olc::Pixel& tint)
 	{
 		DecalInstance di;
@@ -3252,8 +3286,11 @@ namespace olc
 				glBegin(GL_QUADS);
 				glColor4ub(decal.tint[0].r, decal.tint[0].g, decal.tint[0].b, decal.tint[0].a);
 				glTexCoord4f(decal.uv[0].x, decal.uv[0].y, 0.0f, decal.w[0]); glVertex2f(decal.pos[0].x, decal.pos[0].y);
+				glColor4ub(decal.tint[1].r, decal.tint[1].g, decal.tint[1].b, decal.tint[1].a);
 				glTexCoord4f(decal.uv[1].x, decal.uv[1].y, 0.0f, decal.w[1]); glVertex2f(decal.pos[1].x, decal.pos[1].y);
+				glColor4ub(decal.tint[2].r, decal.tint[2].g, decal.tint[2].b, decal.tint[2].a);
 				glTexCoord4f(decal.uv[2].x, decal.uv[2].y, 0.0f, decal.w[2]); glVertex2f(decal.pos[2].x, decal.pos[2].y);
+				glColor4ub(decal.tint[3].r, decal.tint[3].g, decal.tint[3].b, decal.tint[3].a);
 				glTexCoord4f(decal.uv[3].x, decal.uv[3].y, 0.0f, decal.w[3]); glVertex2f(decal.pos[3].x, decal.pos[3].y);
 				glEnd();
 			}
