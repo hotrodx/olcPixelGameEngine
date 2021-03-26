@@ -152,7 +152,7 @@
 
 	Author
 	~~~~~~
-	David Barr, aka javidx9, ©OneLoneCoder 2018, 2019, 2020
+	David Barr, aka javidx9, ï¿½OneLoneCoder 2018, 2019, 2020
 
 	2.01: Made renderer and platform static for multifile projects
 	2.02: Added Decal destructor, optimised Pixel constructor
@@ -895,7 +895,7 @@ namespace olc
 		// Draws a decal rotated to specified angle, wit point of rotation offset
 		void DrawRotatedDecal(const olc::vf2d& pos, olc::Decal* decal, const float fAngle, const olc::vf2d& center = { 0.0f, 0.0f }, const olc::vf2d& scale = { 1.0f,1.0f }, const olc::Pixel& tint = olc::WHITE);
 		void DrawPartialRotatedDecal(const olc::vf2d& pos, olc::Decal* decal, const float fAngle, const olc::vf2d& center, const olc::vf2d& source_pos, const olc::vf2d& source_size, const olc::vf2d& scale = { 1.0f, 1.0f }, const olc::Pixel& tint = olc::WHITE);
-		void DrawPartialRotatedDecalEx(const olc::vf2d& pos, olc::Decal* decal, const float fAngle, const olc::vf2d& center, const olc::vf2d& source_pos, const olc::vf2d& source_size, const olc::vf2d& scale = { 1.0f, 1.0f }, const olc::Pixel* colors = nullptr);
+		void DrawPartialRotatedDecalEx(const olc::vf2d& pos, olc::Decal* decal, const float fAngle, const olc::vf2d& center, const olc::vf2d& source_pos, const olc::vf2d& source_size, const olc::vf2d& scale = { 1.0f, 1.0f }, const olc::Pixel* colors = nullptr, const float shear = 0.f);
 		// Draws a multiline string as a decal, with tiniting and scaling
 		void DrawStringDecal(const olc::vf2d& pos, const std::string& sText, const Pixel col = olc::WHITE, const olc::vf2d& scale = { 1.0f, 1.0f });
 		void DrawStringPropDecal(const olc::vf2d& pos, const std::string& sText, const Pixel col = olc::WHITE, const olc::vf2d& scale = { 1.0f, 1.0f });
@@ -2435,7 +2435,7 @@ namespace olc
 		vLayers[nTargetLayer].vecDecalInstance.push_back(di);
 	}
 
-	void PixelGameEngine::DrawPartialRotatedDecalEx(const olc::vf2d& pos, olc::Decal* decal, const float fAngle, const olc::vf2d& center, const olc::vf2d& source_pos, const olc::vf2d& source_size, const olc::vf2d& scale, const olc::Pixel* colors)
+	void PixelGameEngine::DrawPartialRotatedDecalEx(const olc::vf2d& pos, olc::Decal* decal, const float fAngle, const olc::vf2d& center, const olc::vf2d& source_pos, const olc::vf2d& source_size, const olc::vf2d& scale, const olc::Pixel* colors, const float shear)
 	{
 		DecalInstance di;
 		di.decal = decal;
@@ -2448,10 +2448,10 @@ namespace olc
 		else {
 			di.tint[0] = olc::WHITE;
 		}
-		di.pos[0] = (olc::vf2d(0.0f, 0.0f) - center) * scale;
-		di.pos[1] = (olc::vf2d(0.0f, source_size.y) - center) * scale;
-		di.pos[2] = (olc::vf2d(source_size.x, source_size.y) - center) * scale;
-		di.pos[3] = (olc::vf2d(source_size.x, 0.0f) - center) * scale;
+		di.pos[0] = (olc::vf2d(shear, 0.0f) - center) * scale;
+		di.pos[1] = (olc::vf2d(-shear, source_size.y) - center) * scale;
+		di.pos[2] = (olc::vf2d(source_size.x - shear, source_size.y) - center) * scale;
+		di.pos[3] = (olc::vf2d(source_size.x + shear, 0.0f) - center) * scale;
 		float c = cos(fAngle), s = sin(fAngle);
 		for (int i = 0; i < 4; i++)
 		{
